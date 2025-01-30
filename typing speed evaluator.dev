@@ -1,0 +1,157 @@
+#include <iostream>  \\for input output
+#include <string>    \\to store and manipulate sentences in the form of string
+#include <vector>     \\to create list
+#include <chrono>     \\to measure time
+#include <cstdlib>    \\to generate random numbers
+#include <iomanip>    \\to control decimal numbers (formatting)
+
+using namespace std;
+using namespace chrono;
+// Function to get a random sentence from a list
+string getRandomSentence(const vector<string>& sentences) {
+    return sentences[rand() % sentences.size()];
+}
+
+// Function to calculate Words Per Minute (WPM)
+double calculateWPM(int word_count, double time_taken_seconds) {
+    if (time_taken_seconds == 0) return 0; // Prevent divide by zero
+    double time_taken_minutes = time_taken_seconds / 60.0;
+    return (word_count / time_taken_minutes); // WPM is words per minute
+}
+
+// function to calculate typing accuracy
+double calculateAccuracy(const string& original, const string& user_input) {
+    int correct_chars = 0;
+    int total_chars = 0;
+
+    size_t original_index = 0, user_index = 0;
+
+    // Iterate through both strings
+    while (original_index < original.size() && user_index < user_input.size()) {
+        // Skip spaces in both strings
+        while (original_index < original.size() && isspace(original[original_index])) original_index++;
+        while (user_index < user_input.size() && isspace(user_input[user_index])) user_index++;
+
+        // Compare characters
+        if (original_index < original.size() && user_index < user_input.size()) {
+            if (original[original_index] == user_input[user_index]) {
+                correct_chars++;
+            }
+            total_chars++;
+            original_index++;
+            user_index++;
+        }
+    }
+
+    // Account for remaining non-space characters in the original
+    while (original_index < original.size()) {
+        if (!isspace(original[original_index])) {
+            total_chars++;
+        }
+        original_index++;
+    }
+
+    if (total_chars == 0) return 100.0; // No characters to compare means 100% accuracy
+    return (static_cast<double>(correct_chars) / total_chars) * 100;
+}
+
+// Function to count the number of words in a sentence
+int countWords(const string& sentence) {
+    int word_count = 0;
+    bool in_word = false;
+
+    // Iterate through each character in the sentence
+    for (char c : sentence) {
+        if (isspace(c)) {
+            if (in_word) {
+                word_count++;
+                in_word = false;
+            }
+        } else {
+            in_word = true;
+        }
+    }
+
+    // Account for the last word
+    if (in_word) word_count++;
+
+    return word_count;
+}
+
+// Function to trim leading and trailing spaces
+string trim(const string& str) {
+    size_t start = str.find_first_not_of(" \t\n\r\f\v");
+    size_t end = str.find_last_not_of(" \t\n\r\f\v");
+    return (start == string::npos || end == string::npos) ? "" : str.substr(start, end - start + 1);
+}
+
+int main() {
+    // List of sentences for typing practice
+    vector<string> sentences = {
+        "typing can be fun especially if you turn it into a game challenge yourself to beat your previous speed record",
+        "a many people struggle with typing speed at first but with consistent effort anyone can improve it typing is like a sport",
+        "in order to improve typing speed start with small goals and gradually increase the difficulty try typing for a set",
+        "when typing focus on maintaining a proper posture sit straight with your feet flat on the ground and your hands",
+        "the rain gently taps on the windows creating a soothing melody that fills the room outside the trees sway in"
+    };
+
+    srand(time(0)); // Initialize random number generator
+    char choice;
+
+    do {
+        cout << "\nWelcome to the Typing Speed Tester!\n";
+        cout << "Press Enter to start typing...\n";
+        cin.ignore(); // Wait for Enter
+
+        // Select a random sentence
+        string selected_sentence = getRandomSentence(sentences);
+
+        // Display sentence
+        cout << "\nType the following sentence as fast as you can:\n";
+        cout << "\"" << selected_sentence << "\"\n";
+
+        // Start timing
+        auto start_time = high_resolution_clock::now();
+
+        // Get user input
+        cout << "\nStart typing: ";
+        string user_input;
+        getline(cin, user_input);
+
+        // Trim user input to remove leading/trailing spaces
+        user_input = trim(user_input);
+
+        // End timing
+        auto end_time = high_resolution_clock::now();
+
+        // Calculate time taken in seconds
+        auto duration = duration_cast<seconds>(end_time - start_time);
+        double time_taken = duration.count();
+
+        // Ensure a minimum time_taken of 1 second to avoid division by zero
+        if (time_taken == 0) time_taken = 1;
+
+        // Count words in the selected sentence
+        int word_count = countWords(selected_sentence);
+
+        // Calculate WPM (Words Per Minute)
+        double wpm = calculateWPM(word_count, time_taken);
+
+        // Calculate accuracy
+        double accuracy = calculateAccuracy(selected_sentence, user_input);
+
+        // Display results
+        cout << "\n--- Results ---\n";
+        cout << "Time Taken: " << fixed << setprecision(2) << time_taken << " seconds\n";
+        cout << "Words Per Minute (WPM): " << fixed << setprecision(2) << wpm << "\n";
+        cout << "Accuracy: " << fixed << setprecision(2) << accuracy << "%\n";
+
+        // Ask for retry
+        cout << "\nDo you want to retry? (y/n): ";
+        cin >> choice;
+        cin.ignore(); // Clear input buffer
+    } while (choice == 'y' || choice == 'Y');
+
+    cout << "\nThank you for using the Typing Speed Tester. Keep practicing!\n";
+    return 0;
+}
